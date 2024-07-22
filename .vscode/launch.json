@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug:rusty-memories",
+      "program": "${workspaceFolder}/target/debug/rusty-memories",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build:rusty-memories"
+    }
+  ]
+}
