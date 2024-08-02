@@ -1,8 +1,9 @@
 use clap::Parser;
-use infrastructure::exiftool::ExifToolResult;
+use infrastructure::exiftool::{get_image_exif_data, ExifToolResult};
 use std::{fmt::Debug, path::PathBuf, process::Command};
 use walkdir::WalkDir;
 
+mod core;
 mod infrastructure;
 
 #[derive(Parser, Debug)]
@@ -19,23 +20,14 @@ fn main() -> std::io::Result<()> {
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_file())
     {
-        let out = Command::new("exiftool")
-            .arg("-json")
-            .arg(entry.path())
-            .output()
-            .expect("TODO");
-        if let Some(o) =
-            serde_json::from_str::<Vec<ExifToolResult>>(&String::from_utf8_lossy(&out.stdout))
-                .unwrap()
-                .first()
-        {
-            println!(
-                "file: {} - date: {} - ftype: {} - mtype: {}",
-                entry.path().display(),
-                o.original_create_date.is_some(),
-                o.file_type,
-                o.mime_type
-            );
+        let image = get_image_exif_data(entry.path());
+        if let Some(i) = image {
+            let date_str = if let Some(d) = i.original_create_date {
+                d.to_string()
+            } else {
+                "no date".to_string()
+            };
+            println!("{} - {}", i.path, date_str);
         }
     }
     Ok(())

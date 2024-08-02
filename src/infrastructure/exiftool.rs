@@ -1,5 +1,41 @@
+use std::{path::Path, process::Command};
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+
+use crate::core::models::Image;
+
+/// Extracts exif data from an image using the **exiftool** and returns the domain representation
+/// of the image.
+///
+/// # Arguments
+///
+/// * `path` - The path to the file for that the **exiftool** shall extract the exif data.
+///
+/// # Examples
+///
+/// ```
+/// [TODO:write some example code]
+/// ```
+pub fn get_image_exif_data(path: &Path) -> Option<Image> {
+    // Invoke the exiftool on the given path and get it's output in the JSON format.
+    let exiftool_output = Command::new("exiftool")
+        .arg("-json")
+        .arg(path)
+        .output()
+        .expect("TODO");
+    // Get the string value of the output.
+    let output_str = &String::from_utf8_lossy(&exiftool_output.stdout);
+    // Extract the data and convert it to the domain image model.
+    // TODO: Improve error handling.
+    serde_json::from_str::<Vec<ExifToolResult>>(output_str)
+        .unwrap()
+        .first()
+        .map(|x| Image {
+            path: path.display().to_string(),
+            original_create_date: x.original_create_date,
+        })
+}
 
 /// Structure to parse the output of the **exiftool**.
 #[derive(Deserialize, Debug)]
