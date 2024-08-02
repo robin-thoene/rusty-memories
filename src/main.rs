@@ -1,8 +1,9 @@
-use chrono::{Date, DateTime, NaiveDate, NaiveDateTime, Utc};
 use clap::Parser;
-use serde::Deserialize;
+use infrastructure::exiftool::ExifToolResult;
 use std::{fmt::Debug, path::PathBuf, process::Command};
 use walkdir::WalkDir;
+
+mod infrastructure;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -38,38 +39,4 @@ fn main() -> std::io::Result<()> {
         }
     }
     Ok(())
-}
-
-#[derive(Deserialize, Debug)]
-struct ExifToolResult {
-    #[serde(rename(deserialize = "FileType"))]
-    file_type: String,
-    #[serde(rename(deserialize = "MIMEType"))]
-    mime_type: String,
-    #[serde(
-        rename(deserialize = "DateTimeOriginal"),
-        with = "date_formatter",
-        default
-    )]
-    original_create_date: Option<DateTime<Utc>>,
-}
-
-mod date_formatter {
-    use chrono::{DateTime, NaiveDateTime, Utc};
-    use serde::{self, Deserialize, Deserializer};
-
-    const FORMAT: &str = "%Y:%m:%d %H:%M:%S";
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = Option::<String>::deserialize(deserializer)?;
-        if let Some(s) = s {
-            let dt = NaiveDateTime::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)?;
-            Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc)))
-        } else {
-            Ok(None)
-        }
-    }
 }
